@@ -17,8 +17,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Storyboard Generator",
-  description: "Generate storyboards from story documents using AI",
+  title: "Continuity",
+  description: "AI storyboard continuity.",
 };
 
 export default function RootLayout({

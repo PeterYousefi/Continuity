@@ -55,8 +55,8 @@ export default function WizardShell() {
       {/* Page header */}
       <header className="border-b border-border">
         <div className="max-w-3xl mx-auto px-8 py-5 flex items-baseline justify-between">
-          <h1 className="font-serif text-xl tracking-tight">Storyboard</h1>
-          <span className="eyebrow">AI Story Visualiser</span>
+          <h1 className="font-serif text-xl tracking-tight">Continuity</h1>
+          <span className="eyebrow">AI storyboard continuity.</span>
         </div>
       </header>
 

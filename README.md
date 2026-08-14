@@ -1,6 +1,6 @@
-# Storyboard Generator
+# Continuity
 
-A Next.js 14 App Router application that turns plain-text story documents into an AI-generated visual storyboard. Upload your story, style guide, and character sheet — the app parses scenes with GPT, lets you review and edit the prompts, then generates one image per scene sequentially using the OpenAI image API.
+AI storyboard continuity. Upload your story, style guide, and character sheet — the app parses scenes with GPT, lets you review and edit the prompts, then generates one image per scene sequentially using the OpenAI image API.
 
 ---
 
@@ -13,7 +13,7 @@ Copy `.env.example` to `.env.local` and fill in your values. All five variables 
 | `OPENAI_API_KEY` | `sk-...` | Your OpenAI secret key — used by both API routes; never sent to the browser |
 | `OPENAI_TEXT_MODEL` | `gpt-4o-mini` | GPT chat model used by `/api/parse-scenes` to extract scenes from story text |
 | `OPENAI_IMAGE_MODEL` | `gpt-image-1` | Image generation model used by `/api/generate-image` |
-| `OPENAI_IMAGE_SIZE` | `1536x1024` | Output image dimensions — widest landscape size supported by `gpt-image-1` |
+| `OPENAI_IMAGE_SIZE` | `1024x1024` | Output image dimensions |
 | `OPENAI_IMAGE_QUALITY` | `medium` | Generation quality passed to the image API (`low` \| `medium` \| `high`) |
 
 ---
