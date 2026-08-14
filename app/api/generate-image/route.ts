@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Call OpenAI Images API via raw fetch (Edge-safe) ---
-  // gpt-image-1 returns b64_json in data[0].b64_json (not a URL).
-  // We request response_format:"b64_json" explicitly and return it directly —
-  // no second CDN fetch needed.
+  // gpt-image-1 returns b64_json in data[0].b64_json by default.
+  // response_format is a DALL·E parameter — gpt-image-1 rejects it.
+  // Only send parameters documented for this model: model, prompt, size, quality, n.
   let b64: string;
   try {
     const response = await fetch("https://api.openai.com/v1/images/generations", {
@@ -47,14 +47,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        prompt,
-        size,
-        quality,
-        n: 1,
-        response_format: "b64_json",
-      }),
+      body: JSON.stringify({ model, prompt, size, quality, n: 1 }),
     });
 
     // Capture the raw body text once — used for both error surfacing and parsing.
