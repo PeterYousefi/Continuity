@@ -97,9 +97,10 @@ export default function PromptEditor({ scene, prompt, onChange }: PromptEditorPr
         <details className="group">
           <summary className="eyebrow text-[10px] tracking-widest text-ink-muted
                               cursor-pointer select-none list-none
-                              hover:text-terra transition-colors">
-            <span className="group-open:hidden">Edit raw prompt ↓</span>
-            <span className="hidden group-open:inline">Collapse ↑</span>
+                              hover:text-terra transition-colors
+                              [&::-webkit-details-marker]:hidden">
+            <span className="group-open:hidden inline">Edit raw prompt ↓</span>
+            <span className="group-open:inline hidden">Collapse ↑</span>
           </summary>
           <textarea
             id={`prompt-${scene.id}`}

@@ -12,12 +12,12 @@ interface StoryboardStepProps {
 
 export default function StoryboardStep({ cards, onCardsChange }: StoryboardStepProps) {
   const [done, setDone] = useState(false);
-  // Keep a ref to the latest cards so the loop avoids stale closures
+  // Refs so the loop always reads/calls the latest values without stale closures
   const cardsRef = useRef<StoryboardCard[]>(cards);
+  const onCardsChangeRef = useRef(onCardsChange);
 
-  useEffect(() => {
-    cardsRef.current = cards;
-  }, [cards]);
+  useEffect(() => { cardsRef.current = cards; }, [cards]);
+  useEffect(() => { onCardsChangeRef.current = onCardsChange; }, [onCardsChange]);
 
   // Sequential generation loop — runs once on mount
   useEffect(() => {
@@ -27,26 +27,31 @@ export default function StoryboardStep({ cards, onCardsChange }: StoryboardStepP
       for (let i = 0; i < cardsRef.current.length; i++) {
         if (cancelled) break;
 
+        // Mark card active
         cardsRef.current = cardsRef.current.map((c, idx) =>
           idx === i ? { ...c, status: "active" as const } : c
         );
-        onCardsChange([...cardsRef.current]);
+        onCardsChangeRef.current([...cardsRef.current]);
+
+        let dataUri: string | undefined;
+        let errorMessage: string | undefined;
 
         try {
-          const dataUri = await generateImage(cardsRef.current[i].prompt);
-          if (cancelled) break;
-          cardsRef.current = cardsRef.current.map((c, idx) =>
-            idx === i ? { ...c, status: "done" as const, dataUri } : c
-          );
+          dataUri = await generateImage(cardsRef.current[i].prompt);
         } catch (err) {
-          if (cancelled) break;
-          const errorMessage = err instanceof Error ? err.message : "Unknown error";
-          cardsRef.current = cardsRef.current.map((c, idx) =>
-            idx === i ? { ...c, status: "error" as const, errorMessage } : c
-          );
+          errorMessage = err instanceof Error ? err.message : "Unknown error";
         }
 
-        onCardsChange([...cardsRef.current]);
+        // Don't update state if the component unmounted mid-flight
+        if (cancelled) break;
+
+        cardsRef.current = cardsRef.current.map((c, idx) => {
+          if (idx !== i) return c;
+          return dataUri
+            ? { ...c, status: "done" as const, dataUri }
+            : { ...c, status: "error" as const, errorMessage };
+        });
+        onCardsChangeRef.current([...cardsRef.current]);
       }
 
       if (!cancelled) setDone(true);
@@ -64,34 +69,36 @@ export default function StoryboardStep({ cards, onCardsChange }: StoryboardStepP
     cardsRef.current = cardsRef.current.map((c, i) =>
       i === idx ? { ...c, status: "active" as const, errorMessage: undefined } : c
     );
-    onCardsChange([...cardsRef.current]);
+    onCardsChangeRef.current([...cardsRef.current]);
 
+    let dataUri: string | undefined;
+    let errorMessage: string | undefined;
     try {
-      const dataUri = await generateImage(cardsRef.current[idx].prompt);
-      cardsRef.current = cardsRef.current.map((c, i) =>
-        i === idx ? { ...c, status: "done" as const, dataUri } : c
-      );
+      dataUri = await generateImage(cardsRef.current[idx].prompt);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      cardsRef.current = cardsRef.current.map((c, i) =>
-        i === idx ? { ...c, status: "error" as const, errorMessage } : c
-      );
+      errorMessage = err instanceof Error ? err.message : "Unknown error";
     }
 
-    onCardsChange([...cardsRef.current]);
+    cardsRef.current = cardsRef.current.map((c, i) => {
+      if (i !== idx) return c;
+      return dataUri
+        ? { ...c, status: "done" as const, dataUri }
+        : { ...c, status: "error" as const, errorMessage };
+    });
+    onCardsChangeRef.current([...cardsRef.current]);
   }
 
   const successCount = cards.filter((c) => c.status === "done").length;
-  const activeCard = cards.find((c) => c.status === "active");
+  const activeIndex = cards.findIndex((c) => c.status === "active");
 
   return (
     <div className="flex flex-col gap-10">
       {/* Section heading + live status */}
       <div className="flex items-baseline justify-between">
         <h2>Storyboard</h2>
-        {!done && activeCard && (
+        {!done && activeIndex !== -1 && (
           <span className="eyebrow text-terra">
-            Generating {cards.findIndex((c) => c.status === "active") + 1} of {cards.length}
+            Generating {activeIndex + 1} of {cards.length}
           </span>
         )}
         {done && (

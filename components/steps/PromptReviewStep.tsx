@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { Scene, StoryboardCard } from "@/types";
 import { buildPrompt } from "@/lib/build-prompt";
 import PromptEditor from "@/components/ui/PromptEditor";
@@ -22,10 +22,12 @@ export default function PromptReviewStep({
   onCardsChange,
   onAdvance,
 }: PromptReviewStepProps) {
-  // Initialise cards exactly once — only when the array is empty on first entry.
+  // Initialise cards once in an effect, not during render, to avoid
+  // calling a state setter synchronously during the render pass.
   const initialised = useRef(false);
 
-  if (!initialised.current && cards.length === 0) {
+  useEffect(() => {
+    if (initialised.current || cards.length > 0) return;
     initialised.current = true;
     const initial: StoryboardCard[] = scenes.map((scene) => ({
       scene,
@@ -33,7 +35,9 @@ export default function PromptReviewStep({
       status: "pending",
     }));
     onCardsChange(initial);
-  }
+    // Only run on mount — scenes/styleGuide/characterSheet are stable by this point
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handlePromptChange(index: number, newPrompt: string) {
     const updated = cards.map((card, i) =>
@@ -53,7 +57,7 @@ export default function PromptReviewStep({
         </p>
       </div>
 
-      {/* Prompt editors — separated by hairline rules via first: variant in PromptEditor */}
+      {/* Prompt editors */}
       <div className="flex flex-col">
         {cards.map((card, index) => (
           <PromptEditor
