@@ -1,3 +1,134 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* ── Page defaults ─────────────────────────────────────────── */
+  html {
+    background-color: #FAF8F4;
+    color: #1A1A18;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans text-ink bg-canvas;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  /* ── Typography scale ───────────────────────────────────────── */
+  h1, h2, h3, h4 {
+    @apply font-serif text-ink;
+    font-weight: 400; /* Fraunces reads better at regular weight */
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  h1 { font-size: clamp(2rem, 5vw, 3rem); }
+  h2 { font-size: clamp(1.35rem, 3vw, 1.75rem); }
+  h3 { font-size: 1.2rem; }
+  h4 { font-size: 1rem; }
+
+  p {
+    @apply text-ink;
+  }
+
+  /* ── Form elements ──────────────────────────────────────────── */
+  label {
+    @apply font-sans text-ink-muted;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  input[type="file"],
+  textarea,
+  input[type="text"] {
+    @apply bg-canvas text-ink border border-border rounded;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease;
+  }
+
+  input[type="file"]:focus,
+  textarea:focus,
+  input[type="text"]:focus {
+    outline: none;
+    border-color: #B5654A;
+  }
+
+  /* ── Buttons ────────────────────────────────────────────────── */
+  button {
+    cursor: pointer;
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  /* Primary action button */
+  .btn-primary {
+    @apply inline-flex items-center gap-2
+           bg-ink text-canvas
+           border border-ink
+           px-5 py-2.5
+           font-sans text-sm font-medium
+           rounded
+           transition-colors duration-150;
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply bg-terra border-terra;
+  }
+  .btn-primary:disabled {
+    @apply opacity-35 cursor-not-allowed;
+  }
+
+  /* Ghost / secondary button */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2
+           bg-transparent text-ink
+           border border-border
+           px-5 py-2.5
+           font-sans text-sm
+           rounded
+           transition-colors duration-150;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    @apply border-ink;
+  }
+
+  /* Danger / retry button */
+  .btn-danger {
+    @apply inline-flex items-center gap-2
+           bg-transparent text-terra
+           border border-terra
+           px-4 py-2
+           font-sans text-sm
+           rounded
+           transition-colors duration-150;
+  }
+  .btn-danger:hover:not(:disabled) {
+    @apply bg-terra-light;
+  }
+
+  /* Card container */
+  .card {
+    @apply bg-canvas border border-border rounded p-6;
+  }
+
+  /* Section divider label (e.g. "Step 1 of 3") */
+  .eyebrow {
+    @apply font-sans text-ink-muted;
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  /* Inline notice / callout */
+  .notice {
+    @apply border border-terra-light bg-terra-light text-terra
+           rounded px-4 py-3
+           font-sans text-sm;
+    border-color: #D99B85;
+  }
+}

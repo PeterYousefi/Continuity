@@ -36,32 +36,45 @@ export default function WizardShell() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="min-h-screen bg-canvas">
+      {/* Page header */}
+      <header className="border-b border-border">
+        <div className="max-w-3xl mx-auto px-8 py-5 flex items-baseline justify-between">
+          <h1 className="font-serif text-xl tracking-tight">Storyboard</h1>
+          <span className="eyebrow">AI Story Visualiser</span>
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto px-8 py-12">
         {/* Step indicator */}
-        <nav className="flex gap-2 mb-8" aria-label="Wizard steps">
+        <nav className="flex items-center gap-0 mb-14" aria-label="Wizard steps">
           {([1, 2, 3] as Step[]).map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div
-                className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold border-2 ${
-                  s === step
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : s < step
-                    ? "bg-blue-100 border-blue-300 text-blue-700"
-                    : "bg-white border-gray-300 text-gray-400"
-                }`}
-              >
-                {s}
+            <div key={s} className="flex items-center">
+              <div className="flex items-center gap-3">
+                {/* Step number bubble */}
+                <div
+                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium border transition-colors ${
+                    s === step
+                      ? "bg-ink border-ink text-canvas"
+                      : s < step
+                      ? "bg-terra border-terra text-canvas"
+                      : "bg-canvas border-border text-ink-muted"
+                  }`}
+                >
+                  {s < step ? "✓" : s}
+                </div>
+                {/* Step label */}
+                <span
+                  className={`font-sans text-xs tracking-wide uppercase ${
+                    s === step ? "text-ink" : "text-ink-muted"
+                  }`}
+                >
+                  {STEP_LABELS[s]}
+                </span>
               </div>
-              <span
-                className={`text-sm ${
-                  s === step ? "font-semibold text-gray-900" : "text-gray-400"
-                }`}
-              >
-                {STEP_LABELS[s]}
-              </span>
+              {/* Connector */}
               {s < 3 && (
-                <span className="text-gray-300 mx-1 select-none">›</span>
+                <div className={`w-10 h-px mx-3 ${s < step ? "bg-terra" : "bg-border"}`} />
               )}
             </div>
           ))}
