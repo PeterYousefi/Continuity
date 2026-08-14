@@ -39,6 +39,9 @@ export async function POST(req: NextRequest) {
   // gpt-image-1 returns b64_json in data[0].b64_json by default.
   // response_format is a DALL·E parameter — gpt-image-1 rejects it.
   // Only send parameters documented for this model: model, prompt, size, quality, n.
+  const requestStart = Date.now();
+  console.log(`[generate-image] START  model=${model} size=${size} quality=${quality} t=${new Date(requestStart).toISOString()}`);
+
   let b64: string;
   try {
     const response = await fetch("https://api.openai.com/v1/images/generations", {
@@ -50,10 +53,13 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({ model, prompt, size, quality, n: 1 }),
     });
 
+    const elapsed = Date.now() - requestStart;
+
     // Capture the raw body text once — used for both error surfacing and parsing.
     const rawBody = await response.text();
 
     if (!response.ok) {
+      console.log(`[generate-image] ERROR  status=${response.status} elapsed=${elapsed}ms`);
       // Surface the exact OpenAI error text to the client so nothing is hidden.
       let errorMessage = `OpenAI ${response.status}`;
       try {
@@ -78,6 +84,7 @@ export async function POST(req: NextRequest) {
     b64 = (data as { data: { b64_json: string }[] })?.data?.[0]?.b64_json;
 
     if (!b64) {
+      console.log(`[generate-image] ERROR  no b64_json in response elapsed=${Date.now() - requestStart}ms body=${JSON.stringify(data).slice(0, 200)}`);
       // Surface the full parsed response so the real shape is visible.
       return NextResponse.json(
         { error: `No b64_json in OpenAI response: ${JSON.stringify(data).slice(0, 300)}` },
@@ -85,8 +92,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log(`[generate-image] OK     status=${response.status} elapsed=${Date.now() - requestStart}ms b64_len=${b64.length}`);
+
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.log(`[generate-image] THROW  elapsed=${Date.now() - requestStart}ms err=${message}`);
     return NextResponse.json(
       { error: `Image generation failed: ${message}` },
       { status: 500 }
