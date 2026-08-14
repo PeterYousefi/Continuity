@@ -256,7 +256,7 @@ export default function StoryboardStep({
             <SceneCard
               key={card.scene.id}
               card={card}
-              onRetry={(id) => retryCard(id, activeRef, activeSet)}
+              onRegenerate={(id) => retryCard(id, activeRef, activeSet)}
             />
           ))
         )}

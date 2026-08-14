@@ -2,7 +2,7 @@ import type { StoryboardCard } from "@/types";
 
 interface SceneCardProps {
   card: StoryboardCard;
-  onRetry: (cardId: string) => void;
+  onRegenerate: (cardId: string) => void;
 }
 
 // 1536:1024 → 3:2 aspect ratio
@@ -18,7 +18,7 @@ function toFilename(title: string, id: string): string {
   return `${id}-${slug || "scene"}.png`;
 }
 
-export default function SceneCard({ card, onRetry }: SceneCardProps) {
+export default function SceneCard({ card, onRegenerate }: SceneCardProps) {
   const { scene, status, dataUri, errorMessage } = card;
 
   return (
@@ -48,20 +48,30 @@ export default function SceneCard({ card, onRetry }: SceneCardProps) {
             alt={scene.title}
             className="absolute inset-0 w-full h-full object-cover"
           />
-          {/* Download button — fades in on hover */}
-          <a
-            href={dataUri}
-            download={toFilename(scene.title, scene.id)}
-            className="absolute bottom-2 right-2
-                       opacity-0 group-hover:opacity-100
-                       transition-opacity duration-150
-                       bg-canvas/90 border border-border rounded
-                       px-2.5 py-1 font-sans text-xs text-ink
-                       hover:border-ink leading-none"
-            title="Download image"
-          >
-            ↓ Save
-          </a>
+          {/* Hover overlay — download + regenerate */}
+          <div className="absolute bottom-2 right-2 flex gap-1.5
+                          opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            <button
+              type="button"
+              onClick={() => onRegenerate(scene.id)}
+              className="bg-canvas/90 border border-border rounded
+                         px-2.5 py-1 font-sans text-xs text-ink
+                         hover:border-ink leading-none transition-colors"
+              title="Regenerate this frame"
+            >
+              ↺ Redo
+            </button>
+            <a
+              href={dataUri}
+              download={toFilename(scene.title, scene.id)}
+              className="bg-canvas/90 border border-border rounded
+                         px-2.5 py-1 font-sans text-xs text-ink
+                         hover:border-ink leading-none transition-colors"
+              title="Download image"
+            >
+              ↓ Save
+            </a>
+          </div>
         </div>
       )}
 
@@ -76,7 +86,7 @@ export default function SceneCard({ card, onRetry }: SceneCardProps) {
           </p>
           <button
             type="button"
-            onClick={() => onRetry(scene.id)}
+            onClick={() => onRegenerate(scene.id)}
             className="btn-danger py-1.5 px-4 text-xs"
           >
             Retry
