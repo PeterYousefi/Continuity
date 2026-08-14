@@ -8,6 +8,16 @@ interface SceneCardProps {
 // 1536:1024 → 3:2 aspect ratio
 const ASPECT = "aspect-[3/2]";
 
+/** Derive a safe filename from the scene title */
+function toFilename(title: string, id: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+  return `${id}-${slug || "scene"}.png`;
+}
+
 export default function SceneCard({ card, onRetry }: SceneCardProps) {
   const { scene, status, dataUri, errorMessage } = card;
 
@@ -31,12 +41,28 @@ export default function SceneCard({ card, onRetry }: SceneCardProps) {
 
       {/* ── Done ─────────────────────────────────────────── */}
       {status === "done" && dataUri && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={dataUri}
-          alt={scene.title}
-          className={`${ASPECT} w-full object-cover rounded border border-border`}
-        />
+        <div className={`${ASPECT} w-full relative group rounded overflow-hidden border border-border`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={dataUri}
+            alt={scene.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {/* Download button — fades in on hover */}
+          <a
+            href={dataUri}
+            download={toFilename(scene.title, scene.id)}
+            className="absolute bottom-2 right-2
+                       opacity-0 group-hover:opacity-100
+                       transition-opacity duration-150
+                       bg-canvas/90 border border-border rounded
+                       px-2.5 py-1 font-sans text-xs text-ink
+                       hover:border-ink leading-none"
+            title="Download image"
+          >
+            ↓ Save
+          </a>
+        </div>
       )}
 
       {/* ── Error ────────────────────────────────────────── */}

@@ -89,7 +89,29 @@ export default function StoryboardStep({ cards, onCardsChange }: StoryboardStepP
   }
 
   const successCount = cards.filter((c) => c.status === "done").length;
-  const activeIndex = cards.findIndex((c) => c.status === "active");
+  const activeIndex  = cards.findIndex((c) => c.status === "active");
+
+  /** Trigger a staggered browser download for every completed card */
+  function handleDownloadAll() {
+    const done = cards.filter((c) => c.status === "done" && c.dataUri);
+    done.forEach((card, i) => {
+      setTimeout(() => {
+        const slug = card.scene.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 60);
+        const filename = `${card.scene.id}-${slug || "scene"}.png`;
+        const a = document.createElement("a");
+        a.href = card.dataUri!;
+        a.download = filename;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, i * 80);
+    });
+  }
 
   return (
     <div className="flex flex-col gap-10">
@@ -117,12 +139,23 @@ export default function StoryboardStep({ cards, onCardsChange }: StoryboardStepP
 
       {/* Completion banner */}
       {done && (
-        <div className="border-t border-border pt-8 text-center flex flex-col gap-1">
-          <p className="font-serif text-lg">Storyboard complete.</p>
-          <p className="font-sans text-sm text-ink-muted">
-            {successCount} of {cards.length} image{cards.length !== 1 ? "s" : ""} generated
-            successfully.
-          </p>
+        <div className="border-t border-border pt-8 flex flex-col items-center gap-4">
+          <div className="text-center flex flex-col gap-1">
+            <p className="font-serif text-lg">Storyboard complete.</p>
+            <p className="font-sans text-sm text-ink-muted">
+              {successCount} of {cards.length} image{cards.length !== 1 ? "s" : ""} generated
+              successfully.
+            </p>
+          </div>
+          {successCount > 0 && (
+            <button
+              type="button"
+              onClick={handleDownloadAll}
+              className="btn-primary"
+            >
+              ↓ Download all images
+            </button>
+          )}
         </div>
       )}
     </div>
