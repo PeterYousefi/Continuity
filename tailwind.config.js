@@ -17,6 +17,7 @@ module.exports = {
       fontFamily: {
         serif: ["var(--font-fraunces)", "Georgia", "serif"],
         sans:  ["var(--font-inter)",    "system-ui", "sans-serif"],
+        mono:  ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: {
         DEFAULT: "2px",
