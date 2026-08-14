@@ -11,16 +11,19 @@ import type { Scene } from "@/types";
 export function buildPrompt(
   scene: Scene,
   styleGuide: string,
-  characterSheet: string
+  characterSheet?: string
 ): string {
-  return [
+  const parts = [
     "=== SCENE DESCRIPTION ===",
     scene.description.trim(),
     "",
     "=== VISUAL STYLE DIRECTIVES ===",
     styleGuide.trim(),
-    "",
-    "=== CHARACTER DESCRIPTIONS ===",
-    characterSheet.trim(),
-  ].join("\n");
+  ];
+
+  if (characterSheet && characterSheet.trim().length > 0) {
+    parts.push("", "=== CHARACTER DESCRIPTIONS ===", characterSheet.trim());
+  }
+
+  return parts.join("\n");
 }

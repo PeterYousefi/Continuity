@@ -5,6 +5,7 @@ import UploadStep from "@/components/steps/UploadStep";
 import PromptReviewStep from "@/components/steps/PromptReviewStep";
 import StoryboardStep from "@/components/steps/StoryboardStep";
 import type { Scene, StoryboardCard } from "@/types";
+import { buildPrompt } from "@/lib/build-prompt";
 
 type Step = 1 | 2 | 3;
 
@@ -26,13 +27,27 @@ export default function WizardShell() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [truncated, setTruncated] = useState(false);
 
-  // Step 2 / 3 cards
+  // Step 2 / 3 cards — "with character sheet" set
   const [cards, setCards] = useState<StoryboardCard[]>([]);
+
+  // Step 3 comparison — "without character sheet" set (empty until first toggle)
+  const [cardsWithout, setCardsWithout] = useState<StoryboardCard[]>([]);
 
   function handleUploadAdvance(parsedScenes: Scene[], wasTruncated: boolean) {
     setScenes(parsedScenes);
     setTruncated(wasTruncated);
     setStep(2);
+  }
+
+  // Build the "without" card set on demand (called by StoryboardStep on first toggle)
+  function handleInitCardsWithout() {
+    if (cardsWithout.length > 0) return; // already initialised
+    const initial: StoryboardCard[] = scenes.map((scene) => ({
+      scene,
+      prompt: buildPrompt(scene, styleGuide), // no characterSheet
+      status: "pending",
+    }));
+    setCardsWithout(initial);
   }
 
   return (
@@ -105,7 +120,13 @@ export default function WizardShell() {
         )}
 
         {step === 3 && (
-          <StoryboardStep cards={cards} onCardsChange={setCards} />
+          <StoryboardStep
+            cards={cards}
+            onCardsChange={setCards}
+            cardsWithout={cardsWithout}
+            onCardsWithoutChange={setCardsWithout}
+            onInitCardsWithout={handleInitCardsWithout}
+          />
         )}
       </div>
     </div>
