@@ -40,7 +40,18 @@ export async function POST(req: NextRequest) {
   // response_format is a DALL·E parameter — gpt-image-1 rejects it.
   // Only send parameters documented for this model: model, prompt, size, quality, n.
   const requestStart = Date.now();
-  console.log(`[generate-image] START  model=${model} size=${size} quality=${quality} t=${new Date(requestStart).toISOString()}`);
+
+  // Log the full prompt so duplication / length issues are visible in server logs.
+  console.log(
+    `[generate-image] START  model=${model} size=${size} quality=${quality}` +
+    ` prompt_chars=${prompt.length} t=${new Date(requestStart).toISOString()}`
+  );
+  console.log(`[generate-image] PROMPT\n${prompt}`);
+
+  // Hard server-side timeout — 60 s. Independent of the client-side 90 s abort.
+  // Ensures a hanging OpenAI connection fails visibly rather than stalling forever.
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), 60_000);
 
   let b64: string;
   try {
@@ -51,15 +62,21 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({ model, prompt, size, quality, n: 1 }),
+      signal: timeoutController.signal,
     });
 
+    clearTimeout(timeoutId);
     const elapsed = Date.now() - requestStart;
 
     // Capture the raw body text once — used for both error surfacing and parsing.
     const rawBody = await response.text();
 
     if (!response.ok) {
-      console.log(`[generate-image] ERROR  status=${response.status} elapsed=${elapsed}ms`);
+      // Log status AND the full raw body so the exact OpenAI error is visible.
+      console.log(
+        `[generate-image] ERROR  status=${response.status} elapsed=${elapsed}ms` +
+        ` body=${rawBody.slice(0, 500)}`
+      );
       // Surface the exact OpenAI error text to the client so nothing is hidden.
       let errorMessage = `OpenAI ${response.status}`;
       try {
@@ -95,8 +112,14 @@ export async function POST(req: NextRequest) {
     console.log(`[generate-image] OK     status=${response.status} elapsed=${Date.now() - requestStart}ms b64_len=${b64.length}`);
 
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.log(`[generate-image] THROW  elapsed=${Date.now() - requestStart}ms err=${message}`);
+    clearTimeout(timeoutId);
+    const elapsed = Date.now() - requestStart;
+    const isTimeout =
+      err instanceof Error && err.name === "AbortError";
+    const message = isTimeout
+      ? `Server-side timeout after 60s (elapsed=${elapsed}ms)`
+      : err instanceof Error ? err.message : "Unknown error";
+    console.log(`[generate-image] THROW  elapsed=${elapsed}ms err=${message}`);
     return NextResponse.json(
       { error: `Image generation failed: ${message}` },
       { status: 500 }

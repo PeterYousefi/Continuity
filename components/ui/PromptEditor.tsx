@@ -9,14 +9,15 @@ interface PromptEditorProps {
 }
 
 /**
- * Splits the structured prompt from buildPrompt() into its three labelled
- * sections so each can be rendered with distinct visual treatment.
- * Falls back gracefully if the prompt has been edited into a freeform string.
+ * Splits the structured prompt from buildPrompt() into its labelled sections.
+ * Characters section is optional — buildPrompt() omits it when no character
+ * sheet is provided. Falls back to null if the two required sections are absent,
+ * which triggers the freeform textarea fallback.
  */
 function parsePromptSections(prompt: string): {
   scene: string;
   style: string;
-  characters: string;
+  characters: string | null;
 } | null {
   const sceneMatch = prompt.match(
     /=== SCENE DESCRIPTION ===\n([\s\S]*?)(?=\n=== VISUAL STYLE DIRECTIVES ===|$)/
@@ -28,12 +29,13 @@ function parsePromptSections(prompt: string): {
     /=== CHARACTER DESCRIPTIONS ===\n([\s\S]*?)$/
   );
 
-  if (!sceneMatch || !styleMatch || !charMatch) return null;
+  // Only the scene + style sections are required for structured display
+  if (!sceneMatch || !styleMatch) return null;
 
   return {
     scene:      sceneMatch[1].trim(),
     style:      styleMatch[1].trim(),
-    characters: charMatch[1].trim(),
+    characters: charMatch ? charMatch[1].trim() : null,
   };
 }
 
@@ -60,18 +62,20 @@ export default function PromptEditor({ scene, prompt, onChange }: PromptEditorPr
           </div>
 
           {/* Style section */}
-          <div className="flex flex-col gap-1 px-4 py-3 bg-canvas border-b border-border">
+          <div className={`flex flex-col gap-1 px-4 py-3 bg-canvas ${sections.characters !== null ? "border-b border-border" : ""}`}>
             <span className="eyebrow text-[10px] tracking-widest">Visual Style</span>
             <p className="text-ink-muted whitespace-pre-wrap">{sections.style}</p>
           </div>
 
-          {/* Character section — highlighted so it's obvious at a glance */}
-          <div className="flex flex-col gap-1 px-4 py-3 bg-terra-light border-l-2 border-l-terra">
-            <span className="eyebrow text-[10px] tracking-widest text-terra">
-              Character Descriptions ✓
-            </span>
-            <p className="text-ink whitespace-pre-wrap">{sections.characters}</p>
-          </div>
+          {/* Character section — only shown when character sheet was provided */}
+          {sections.characters !== null && (
+            <div className="flex flex-col gap-1 px-4 py-3 bg-terra-light border-l-2 border-l-terra">
+              <span className="eyebrow text-[10px] tracking-widest text-terra">
+                Character Descriptions ✓
+              </span>
+              <p className="text-ink whitespace-pre-wrap">{sections.characters}</p>
+            </div>
+          )}
 
         </div>
       ) : (
@@ -94,13 +98,14 @@ export default function PromptEditor({ scene, prompt, onChange }: PromptEditorPr
 
       {/* ── Edit toggle: expand to raw textarea ────────────────── */}
       {sections && (
-        <details className="group">
+        <details className="group -mt-1">
           <summary className="eyebrow text-[10px] tracking-widest text-ink-muted
                               cursor-pointer select-none list-none
                               hover:text-terra transition-colors
                               [&::-webkit-details-marker]:hidden">
-            <span className="group-open:hidden inline">Edit raw prompt ↓</span>
-            <span className="group-open:inline hidden">Collapse ↑</span>
+            {/* Hint: panels above are read-only; this is the edit entry-point */}
+            <span className="group-open:hidden inline">↳ Edit prompt</span>
+            <span className="group-open:inline hidden">↑ Collapse</span>
           </summary>
           <textarea
             id={`prompt-${scene.id}`}

@@ -16,16 +16,24 @@ function useGenerationLoop(
   enabled: boolean           // only start when true
 ): { done: boolean } {
   const [done, setDone] = useState(false);
-  const cardsRef     = useRef<StoryboardCard[]>(cards);
-  const setCardsRef  = useRef(setCards);
-  const startedRef   = useRef(false);
+  const cardsRef    = useRef<StoryboardCard[]>(cards);
+  const setCardsRef = useRef(setCards);
 
-  useEffect(() => { cardsRef.current = cards; },   [cards]);
+  useEffect(() => { cardsRef.current = cards; },    [cards]);
   useEffect(() => { setCardsRef.current = setCards; }, [setCards]);
 
   useEffect(() => {
-    if (!enabled || startedRef.current) return;
-    startedRef.current = true;
+    // Guard 1: not armed yet, or no cards to process.
+    // cards.length is a dependency so this re-runs after the async state update
+    // that populates cardsWithout (the "without" path starts with an empty array
+    // that fills one render later).
+    if (!enabled || cards.length === 0) return;
+
+    // Guard 2: every card is already past "pending" — a previous loop run
+    // (e.g. the StrictMode dry-run) already started processing. Don't restart.
+    // We check the snapshot at effect-fire time, before cardsRef is mutated.
+    if (cards.every((c) => c.status !== "pending")) return;
+
     let cancelled = false;
 
     async function runLoop() {
@@ -60,8 +68,10 @@ function useGenerationLoop(
 
     runLoop();
     return () => { cancelled = true; };
+  // cards.length: lets the effect re-run once cardsWithout is populated.
+  // cards itself is intentionally excluded — we re-snapshot via cardsRef.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, cards.length]);
 
   return { done };
 }
