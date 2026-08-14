@@ -19,6 +19,9 @@ interface UploadStepProps {
   setStyleGuide: (v: string) => void;
   setCharacterSheet: (v: string) => void;
   onAdvance: (scenes: Scene[], truncated: boolean) => void;
+  /** Pre-populate the parsed scenes preview when navigating back to this step */
+  initialScenes?: Scene[];
+  initialTruncated?: boolean;
 }
 
 // Filename labels shown in the upload rows when sample data is loaded
@@ -36,11 +39,14 @@ export default function UploadStep({
   setStyleGuide,
   setCharacterSheet,
   onAdvance,
+  initialScenes,
+  initialTruncated = false,
 }: UploadStepProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scenes, setScenes] = useState<Scene[] | null>(null);
-  const [truncated, setTruncated] = useState(false);
+  // Pre-populate from initialScenes when navigating back so the preview is still visible
+  const [scenes, setScenes] = useState<Scene[] | null>(initialScenes ?? null);
+  const [truncated, setTruncated] = useState(initialTruncated);
 
   // Track which filename label each slot displays (null = nothing loaded yet)
   const [storyFilename, setStoryFilename] = useState<string | null>(null);

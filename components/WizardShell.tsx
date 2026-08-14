@@ -17,6 +17,9 @@ const STEP_LABELS: Record<Step, string> = {
 
 export default function WizardShell() {
   const [step, setStep] = useState<Step>(1);
+  // Tracks the furthest step ever reached — lets completed steps stay clickable
+  // even after navigating back. Never decreases.
+  const [highWaterMark, setHighWaterMark] = useState<Step>(1);
 
   // Raw document strings
   const [storyText, setStoryText] = useState("");
@@ -33,10 +36,15 @@ export default function WizardShell() {
   // Step 3 comparison — "without character sheet" set (empty until first toggle)
   const [cardsWithout, setCardsWithout] = useState<StoryboardCard[]>([]);
 
+  function goToStep(s: Step) {
+    setStep(s);
+    if (s > highWaterMark) setHighWaterMark(s);
+  }
+
   function handleUploadAdvance(parsedScenes: Scene[], wasTruncated: boolean) {
     setScenes(parsedScenes);
     setTruncated(wasTruncated);
-    setStep(2);
+    goToStep(2);
   }
 
   // Build the "without" card set on demand (called by StoryboardStep on first toggle)
@@ -63,36 +71,48 @@ export default function WizardShell() {
       <div className="max-w-3xl mx-auto px-8 py-12">
         {/* Step indicator */}
         <nav className="flex items-center gap-0 mb-14" aria-label="Wizard steps">
-          {([1, 2, 3] as Step[]).map((s) => (
-            <div key={s} className="flex items-center">
-              <div className="flex items-center gap-3">
-                {/* Step number bubble */}
-                <div
-                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium border transition-colors ${
-                    s === step
-                      ? "bg-ink border-ink text-canvas"
-                      : s < step
-                      ? "bg-terra border-terra text-canvas"
-                      : "bg-canvas border-border text-ink-muted"
+          {([1, 2, 3] as Step[]).map((s) => {
+            const isActive    = s === step;
+            const isCompleted = s < step;
+            const isClickable = s < step || (s <= highWaterMark && s !== step);
+            return (
+              <div key={s} className="flex items-center">
+                <button
+                  type="button"
+                  disabled={!isClickable}
+                  onClick={() => isClickable && goToStep(s)}
+                  className={`flex items-center gap-3 transition-opacity ${
+                    isClickable ? "cursor-pointer hover:opacity-70" : "cursor-default"
                   }`}
                 >
-                  {s < step ? "✓" : s}
-                </div>
-                {/* Step label */}
-                <span
-                  className={`font-sans text-xs tracking-wide uppercase ${
-                    s === step ? "text-ink" : "text-ink-muted"
-                  }`}
-                >
-                  {STEP_LABELS[s]}
-                </span>
+                  {/* Step number bubble */}
+                  <div
+                    className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium border transition-colors ${
+                      isActive
+                        ? "bg-ink border-ink text-canvas"
+                        : isCompleted
+                        ? "bg-terra border-terra text-canvas"
+                        : "bg-canvas border-border text-ink-muted"
+                    }`}
+                  >
+                    {isCompleted ? "✓" : s}
+                  </div>
+                  {/* Step label */}
+                  <span
+                    className={`font-sans text-xs tracking-wide uppercase ${
+                      isActive ? "text-ink" : "text-ink-muted"
+                    }`}
+                  >
+                    {STEP_LABELS[s]}
+                  </span>
+                </button>
+                {/* Connector */}
+                {s < 3 && (
+                  <div className={`w-10 h-px mx-3 ${s < step ? "bg-terra" : "bg-border"}`} />
+                )}
               </div>
-              {/* Connector */}
-              {s < 3 && (
-                <div className={`w-10 h-px mx-3 ${s < step ? "bg-terra" : "bg-border"}`} />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* Step content */}
@@ -105,6 +125,8 @@ export default function WizardShell() {
             setStyleGuide={setStyleGuide}
             setCharacterSheet={setCharacterSheet}
             onAdvance={handleUploadAdvance}
+            initialScenes={scenes.length > 0 ? scenes : undefined}
+            initialTruncated={truncated}
           />
         )}
 
@@ -115,7 +137,7 @@ export default function WizardShell() {
             characterSheet={characterSheet}
             cards={cards}
             onCardsChange={setCards}
-            onAdvance={() => setStep(3)}
+            onAdvance={() => goToStep(3)}
           />
         )}
 
