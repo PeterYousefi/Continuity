@@ -252,11 +252,13 @@ export default function StoryboardStep({
             </div>
           ))
         ) : (
-          activeCards.map((card) => (
+          activeCards.map((card, i) => (
             <SceneCard
               key={card.scene.id}
               card={card}
               onRegenerate={(id) => retryCard(id, activeRef, activeSet)}
+              activeIndex={card.status === "active" ? i + 1 : undefined}
+              totalCount={card.status === "active" ? activeCards.length : undefined}
             />
           ))
         )}
