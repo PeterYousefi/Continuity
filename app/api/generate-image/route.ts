@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Call OpenAI Images API via raw fetch (Edge-safe) ---
-  // gpt-image-1 does not support response_format:"b64_json" — it only returns URLs.
-  // We fetch the URL server-side and convert to base64 so the client receives a
-  // self-contained data URI with no expiry dependency on OpenAI's CDN.
+  // gpt-image-1 returns b64_json in data[0].b64_json (not a URL).
+  // We request response_format:"b64_json" explicitly and return it directly —
+  // no second CDN fetch needed.
   let b64: string;
   try {
     const response = await fetch("https://api.openai.com/v1/images/generations", {
@@ -47,48 +47,50 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, prompt, size, quality, n: 1 }),
+      body: JSON.stringify({
+        model,
+        prompt,
+        size,
+        quality,
+        n: 1,
+        response_format: "b64_json",
+      }),
     });
 
+    // Capture the raw body text once — used for both error surfacing and parsing.
+    const rawBody = await response.text();
+
     if (!response.ok) {
-      let errorMessage = `OpenAI API error ${response.status}`;
+      // Surface the exact OpenAI error text to the client so nothing is hidden.
+      let errorMessage = `OpenAI ${response.status}`;
       try {
-        const errorJson = await response.json();
-        errorMessage = errorJson?.error?.message ?? errorMessage;
+        const errorJson = JSON.parse(rawBody);
+        errorMessage = errorJson?.error?.message ?? rawBody;
       } catch {
-        // non-JSON error body — keep the status message
+        errorMessage = rawBody || errorMessage;
       }
       return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
-    const data = await response.json();
-    const imageUrl: string | undefined = data?.data?.[0]?.url;
-
-    if (!imageUrl) {
+    let data: unknown;
+    try {
+      data = JSON.parse(rawBody);
+    } catch {
       return NextResponse.json(
-        { error: "No image URL returned from OpenAI." },
+        { error: `OpenAI returned non-JSON: ${rawBody.slice(0, 300)}` },
         { status: 500 }
       );
     }
 
-    // Fetch the image and convert to base64 server-side
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
+    b64 = (data as { data: { b64_json: string }[] })?.data?.[0]?.b64_json;
+
+    if (!b64) {
+      // Surface the full parsed response so the real shape is visible.
       return NextResponse.json(
-        { error: "Failed to fetch generated image from OpenAI CDN." },
+        { error: `No b64_json in OpenAI response: ${JSON.stringify(data).slice(0, 300)}` },
         { status: 500 }
       );
     }
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const uint8 = new Uint8Array(arrayBuffer);
-    // Edge-safe base64 encoding (no Buffer available in Edge runtime).
-    // Process in 8 kB chunks to avoid call-stack overflows on large images.
-    const CHUNK = 8192;
-    let binary = "";
-    for (let i = 0; i < uint8.length; i += CHUNK) {
-      binary += String.fromCharCode.apply(null, Array.from(uint8.subarray(i, i + CHUNK)));
-    }
-    b64 = btoa(binary);
 
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
