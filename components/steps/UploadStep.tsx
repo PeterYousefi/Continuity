@@ -31,9 +31,7 @@ export default function UploadStep({
   const [truncated, setTruncated] = useState(false);
 
   const allFilesLoaded =
-    storyText.length > 0 &&
-    styleGuide.length > 0 &&
-    characterSheet.length > 0;
+    storyText.length > 0 && styleGuide.length > 0 && characterSheet.length > 0;
 
   async function handleParse() {
     setLoading(true);
@@ -51,59 +49,90 @@ export default function UploadStep({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10">
+      {/* Section heading */}
+      <div>
+        <h2>Upload Documents</h2>
+        <p className="mt-2 font-sans text-sm text-ink-muted">
+          Three plain-text files (.txt or .md). All processing happens server-side —
+          your files never leave this session.
+        </p>
+      </div>
+
+      {/* File inputs */}
       <div className="flex flex-col gap-4">
         <FileUploadInput label="Story / Scene List" onChange={setStoryText} />
         <FileUploadInput label="Visual Style Guide" onChange={setStyleGuide} />
         <FileUploadInput label="Character Sheet" onChange={setCharacterSheet} />
       </div>
 
-      <button
-        type="button"
-        onClick={handleParse}
-        disabled={!allFilesLoaded || loading}
-        className="self-start px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {loading ? "Parsing scenes…" : "Parse Scenes"}
-      </button>
+      {/* Parse trigger */}
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={handleParse}
+          disabled={!allFilesLoaded || loading}
+          className="btn-primary"
+        >
+          {loading ? "Parsing scenes…" : "Parse Scenes"}
+        </button>
+        {!allFilesLoaded && (
+          <span className="font-sans text-xs text-ink-muted">
+            Upload all three files to continue
+          </span>
+        )}
+      </div>
 
+      {/* Error */}
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <div className="notice">
           {error}
-        </p>
+        </div>
       )}
 
+      {/* Parsed scenes preview */}
       {scenes && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           {truncated && (
-            <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+            <div className="notice">
               Your story had more than {MAX_SCENES} scenes. Only the first{" "}
-              {MAX_SCENES} are shown — edit your story document to reorder if
-              needed.
+              {MAX_SCENES} are shown — edit your story document to reorder if needed.
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
-            {scenes.map((scene) => (
+          <div className="flex flex-col gap-px border border-border rounded overflow-hidden">
+            {scenes.map((scene, i) => (
               <div
                 key={scene.id}
-                className="border border-gray-200 rounded p-3 bg-gray-50"
+                className="flex gap-5 px-5 py-4 bg-canvas hover:bg-terra-light/30 transition-colors"
               >
-                <p className="text-sm font-semibold text-gray-800">
-                  {scene.title}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">{scene.description}</p>
+                <span className="eyebrow pt-0.5 w-14 shrink-0">
+                  Scene {i + 1}
+                </span>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="font-sans text-sm font-medium text-ink leading-snug">
+                    {scene.title}
+                  </p>
+                  <p className="font-sans text-sm text-ink-muted leading-relaxed">
+                    {scene.description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => onAdvance(scenes, truncated)}
-            className="self-start px-4 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            Looks good →
-          </button>
+          <div className="flex items-center justify-between pt-2 border-t border-border">
+            <span className="font-sans text-xs text-ink-muted">
+              {scenes.length} scene{scenes.length !== 1 ? "s" : ""} found
+            </span>
+            <button
+              type="button"
+              onClick={() => onAdvance(scenes, truncated)}
+              className="btn-primary"
+            >
+              Looks good →
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -13,44 +13,53 @@ export default function SceneCard({ card, onRetry }: SceneCardProps) {
 
   return (
     <div className="flex flex-col gap-2">
+      {/* ── Pending ──────────────────────────────────────── */}
       {status === "pending" && (
-        <div className={`${ASPECT} w-full bg-gray-200 rounded`} />
+        <div className={`${ASPECT} w-full bg-border rounded`} />
       )}
 
+      {/* ── Active / generating ──────────────────────────── */}
       {status === "active" && (
-        <div className={`${ASPECT} w-full bg-gray-200 rounded relative animate-pulse`}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-gray-500 text-sm font-medium">Generating…</span>
+        <div className={`${ASPECT} w-full bg-border rounded relative overflow-hidden`}>
+          {/* Shimmer sweep */}
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-canvas/60 to-transparent" />
+          <div className="absolute inset-0 flex items-end p-3">
+            <span className="eyebrow text-ink-muted">Generating…</span>
           </div>
         </div>
       )}
 
+      {/* ── Done ─────────────────────────────────────────── */}
       {status === "done" && dataUri && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={dataUri}
           alt={scene.title}
-          className={`${ASPECT} w-full object-cover rounded`}
+          className={`${ASPECT} w-full object-cover rounded border border-border`}
         />
       )}
 
+      {/* ── Error ────────────────────────────────────────── */}
       {status === "error" && (
         <div
-          className={`${ASPECT} w-full bg-red-50 border border-red-300 rounded flex flex-col items-center justify-center gap-2 p-4`}
+          className={`${ASPECT} w-full bg-terra-light border border-[#D99B85] rounded
+                      flex flex-col items-center justify-center gap-3 p-5`}
         >
-          <p className="text-red-700 text-sm text-center">
-            {errorMessage ?? "An error occurred."}
+          <p className="text-terra font-sans text-xs text-center leading-relaxed">
+            {errorMessage ?? "Generation failed."}
           </p>
           <button
+            type="button"
             onClick={() => onRetry(scene.id)}
-            className="px-3 py-1 text-sm font-medium bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            className="btn-danger py-1.5 px-4 text-xs"
           >
             Retry
           </button>
         </div>
       )}
 
-      <p className="text-sm font-medium text-gray-800 truncate">{scene.title}</p>
+      {/* ── Caption ──────────────────────────────────────── */}
+      <p className="font-sans text-sm text-ink leading-snug truncate">{scene.title}</p>
     </div>
   );
 }

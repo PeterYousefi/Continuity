@@ -43,16 +43,18 @@ export default function PromptReviewStep({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10">
+      {/* Section heading */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Review Prompts</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Each prompt is pre-filled from your scene, style guide, and character
-          sheet. Edit any prompt before generating.
+        <h2>Review Prompts</h2>
+        <p className="mt-2 font-sans text-sm text-ink-muted">
+          Each prompt is pre-filled from your scene, style guide, and character sheet.
+          Edit any prompt before spending image credits.
         </p>
       </div>
 
-      <div className="flex flex-col gap-6">
+      {/* Prompt editors — separated by hairline rules via first: variant in PromptEditor */}
+      <div className="flex flex-col">
         {cards.map((card, index) => (
           <PromptEditor
             key={card.scene.id}
@@ -63,14 +65,17 @@ export default function PromptReviewStep({
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={onAdvance}
-        disabled={cards.length === 0}
-        className="self-end rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Generate Storyboard →
-      </button>
+      {/* Advance */}
+      <div className="flex justify-end pt-2 border-t border-border">
+        <button
+          type="button"
+          onClick={onAdvance}
+          disabled={cards.length === 0}
+          className="btn-primary"
+        >
+          Generate Storyboard →
+        </button>
+      </div>
     </div>
   );
 }
