@@ -4,6 +4,11 @@ import { useState } from "react";
 import FileUploadInput from "@/components/ui/FileUploadInput";
 import { parseScenes } from "@/lib/parse-scenes";
 import { MAX_SCENES } from "@/lib/constants";
+import {
+  SAMPLE_STORY,
+  SAMPLE_STYLE_GUIDE,
+  SAMPLE_CHARACTER_SHEET,
+} from "@/lib/sample-documents";
 import type { Scene } from "@/types";
 
 interface UploadStepProps {
@@ -15,6 +20,13 @@ interface UploadStepProps {
   setCharacterSheet: (v: string) => void;
   onAdvance: (scenes: Scene[], truncated: boolean) => void;
 }
+
+// Filename labels shown in the upload rows when sample data is loaded
+const SAMPLE_FILENAMES = {
+  story: "sample-story.txt",
+  style: "sample-style-guide.txt",
+  characters: "sample-character-sheet.txt",
+} as const;
 
 export default function UploadStep({
   storyText,
@@ -30,8 +42,31 @@ export default function UploadStep({
   const [scenes, setScenes] = useState<Scene[] | null>(null);
   const [truncated, setTruncated] = useState(false);
 
+  // Track which filename label each slot displays (null = nothing loaded yet)
+  const [storyFilename, setStoryFilename] = useState<string | null>(null);
+  const [styleFilename, setStyleFilename] = useState<string | null>(null);
+  const [charFilename, setCharFilename] = useState<string | null>(null);
+
   const allFilesLoaded =
     storyText.length > 0 && styleGuide.length > 0 && characterSheet.length > 0;
+
+  function handleLoadSample() {
+    setStoryText(SAMPLE_STORY);
+    setStyleGuide(SAMPLE_STYLE_GUIDE);
+    setCharacterSheet(SAMPLE_CHARACTER_SHEET);
+    setStoryFilename(SAMPLE_FILENAMES.story);
+    setStyleFilename(SAMPLE_FILENAMES.style);
+    setCharFilename(SAMPLE_FILENAMES.characters);
+    // Reset any previous parse result
+    setScenes(null);
+    setError(null);
+  }
+
+  // These wrappers exist only to update the text state; filename display
+  // is handled separately via onFilenameChange on each FileUploadInput.
+  function handleStoryChange(text: string) { setStoryText(text); }
+  function handleStyleChange(text: string) { setStyleGuide(text); }
+  function handleCharChange(text: string)  { setCharacterSheet(text); }
 
   async function handleParse() {
     setLoading(true);
@@ -50,7 +85,8 @@ export default function UploadStep({
 
   return (
     <div className="flex flex-col gap-10">
-      {/* Section heading */}
+
+      {/* ── Section heading ──────────────────────────────── */}
       <div>
         <h2>Upload Documents</h2>
         <p className="mt-2 font-sans text-sm text-ink-muted">
@@ -59,14 +95,51 @@ export default function UploadStep({
         </p>
       </div>
 
-      {/* File inputs */}
+      {/* ── Sample documents callout ─────────────────────── */}
+      {!allFilesLoaded && (
+        <div className="border border-border rounded p-5 flex flex-col gap-3 bg-canvas">
+          <div className="flex flex-col gap-1">
+            <p className="font-sans text-sm font-medium text-ink">
+              Try with sample documents
+            </p>
+            <p className="font-sans text-xs text-ink-muted leading-relaxed">
+              A five-scene short film: three named characters, a visual style guide,
+              and a complete scene list — ready to parse and generate immediately.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLoadSample}
+            className="btn-ghost self-start"
+          >
+            Load sample documents
+          </button>
+        </div>
+      )}
+
+      {/* ── File inputs ──────────────────────────────────── */}
       <div className="flex flex-col gap-4">
-        <FileUploadInput label="Story / Scene List" onChange={setStoryText} />
-        <FileUploadInput label="Visual Style Guide" onChange={setStyleGuide} />
-        <FileUploadInput label="Character Sheet" onChange={setCharacterSheet} />
+        <FileUploadInput
+          label="Story / Scene List"
+          value={storyFilename}
+          onChange={handleStoryChange}
+          onFilenameChange={setStoryFilename}
+        />
+        <FileUploadInput
+          label="Visual Style Guide"
+          value={styleFilename}
+          onChange={handleStyleChange}
+          onFilenameChange={setStyleFilename}
+        />
+        <FileUploadInput
+          label="Character Sheet"
+          value={charFilename}
+          onChange={handleCharChange}
+          onFilenameChange={setCharFilename}
+        />
       </div>
 
-      {/* Parse trigger */}
+      {/* ── Parse trigger ────────────────────────────────── */}
       <div className="flex items-center gap-4">
         <button
           type="button"
@@ -83,14 +156,14 @@ export default function UploadStep({
         )}
       </div>
 
-      {/* Error */}
+      {/* ── Error ────────────────────────────────────────── */}
       {error && (
         <div className="notice">
           {error}
         </div>
       )}
 
-      {/* Parsed scenes preview */}
+      {/* ── Parsed scenes preview ────────────────────────── */}
       {scenes && (
         <div className="flex flex-col gap-6">
           {truncated && (
@@ -135,6 +208,7 @@ export default function UploadStep({
           </div>
         </div>
       )}
+
     </div>
   );
 }
