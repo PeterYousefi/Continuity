@@ -2,6 +2,12 @@
 
 AI storyboard continuity. Upload your story, style guide, and character sheet — the app parses scenes with GPT, lets you review and edit one image prompt per scene, then generates a storyboard sequentially using the OpenAI image API.
 
+**The app is live, fully working, and tested — try it yourself:**
+
+- 🌐 **Live app:** [continuity-omega.vercel.app](https://continuity-omega.vercel.app/)
+- 🎬 **Demo video:** [youtu.be/uUA3l0dTKBk](https://youtu.be/uUA3l0dTKBk)
+- 💻 **GitHub repo:** [github.com/PeterYousefi/Continuity](https://github.com/PeterYousefi/Continuity)
+
 ---
 
 ## How it works
