@@ -109,8 +109,9 @@ export default function UploadStep({
               Try with sample documents
             </p>
             <p className="font-sans text-xs text-ink-muted leading-relaxed">
-              A five-scene short film: three named characters, a visual style guide,
-              and a complete scene list — ready to parse and generate immediately.
+              &ldquo;The Cartographer&rsquo;s Last Map&rdquo; — a five-scene period
+              short with three named characters (Maren, Dorian, Luca), a
+              Bergman-influenced style guide, and a complete scene list.
             </p>
           </div>
           <button
@@ -125,6 +126,10 @@ export default function UploadStep({
 
       {/* ── File inputs ──────────────────────────────────── */}
       <div className="flex flex-col gap-4">
+        <p className="font-sans text-xs text-ink-muted">
+          One frame will be generated per scene in your story, up to a maximum of{" "}
+          {MAX_SCENES}.
+        </p>
         <FileUploadInput
           label="Story / Scene List"
           value={storyFilename}
